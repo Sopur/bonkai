@@ -119,6 +119,35 @@ class Vector2d {
     }
 }
 
+class Bound2d extends Vector2d {
+    /**
+     * 2d bound
+     * @param {number} width width
+     * @param {number} height height
+     */
+    constructor(x = 0, y = 0, width = 0, height = 0) {
+        super(x, y);
+        this.width = width;
+        this.height = height;
+    }
+}
+
+class Box2d {
+    /**
+     * Box/square geometry
+     * @param {Vector2d} topLeft Point on the square
+     * @param {Vector2d} topRight Point on the square
+     * @param {Vector2d} bottomLeft Point on the square
+     * @param {Vector2d} bottomRight Point on the square
+     */
+    constructor(topLeft, topRight, bottomLeft, bottomRight) {
+        this.topLeft = topLeft;
+        this.topRight = topRight;
+        this.bottomLeft = bottomLeft;
+        this.bottomRight = bottomRight;
+    }
+}
+
 class Circle extends Vector2d {
     /**
      * Circle in 2d space
@@ -129,6 +158,10 @@ class Circle extends Vector2d {
     constructor(radius, x, y) {
         super(x, y);
         this.radius = radius;
+    }
+
+    align() {
+        return new Rectangle(this.radius * 2, this.radius * 2, this.x - this.radius, this.y - this.radius);
     }
 }
 
@@ -165,7 +198,8 @@ class Entity extends Circle {
         velocity = new Vector2d(0),
         acceleration = new Vector2d(0),
         canJump = false,
-        hasCollided
+        hasCollided = false,
+        isDead = false
     ) {
         super(radius, x, y);
         this.color = color;
@@ -175,6 +209,7 @@ class Entity extends Circle {
         this.acceleration = acceleration;
         this.canJump = canJump;
         this.hasCollided = hasCollided;
+        this.isDead = isDead;
     }
 
     copy() {
@@ -188,7 +223,8 @@ class Entity extends Circle {
             this.velocity.copy(),
             this.acceleration.copy(),
             this.canJump,
-            this.hasCollided
+            this.hasCollided,
+            this.isDead
         );
     }
 
@@ -218,8 +254,8 @@ class Platform extends Rectangle {
     }
 
     align() {
-        return new Rectangle(this.width, this.height, -this.width / 2, -this.height / 2);
+        return new Rectangle(this.width, this.height, -this.width / 2 + this.x, -this.height / 2 + this.y);
     }
 }
 
-export { WorldSettings, Vector2d, Circle, Rectangle, Entity, Platform };
+export { WorldSettings, Vector2d, Bound2d, Box2d, Circle, Rectangle, Entity, Platform };

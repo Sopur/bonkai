@@ -6,4 +6,8 @@ function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
 
-export { lerp, clamp };
+function randomNumber(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+export { lerp, clamp, randomNumber };

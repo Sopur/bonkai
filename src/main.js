@@ -1,4 +1,5 @@
 import { GameEngine } from "./game.js";
+import { randomNumber } from "./math.js";
 import { World } from "./physics.js";
 import { Entity, Platform, WorldSettings } from "./util.js";
 
@@ -10,13 +11,28 @@ const playersXDistance = 200;
 const playerYOffset = -250;
 
 const gravity = 3;
-const bounceFactor = 2;
+const bounceFactor = 5;
 const frictionFactor = 0.2;
 const playerAcceleration = 2;
 const playerJumpForce = 150;
 
 const outOfBoundRadius = 1000;
 const hardHitPowerMultiplier = 2;
+
+function genWorld() {
+    let platforms = [];
+    for (let i = 0; i < 1; i++) {
+        platforms.push(new Platform("green", 1000 + i * 80 * i, 50, 0, -150 + i * 50));
+    }
+    return new World(
+        platforms,
+        [
+            new Entity("blue", randomNumber(5, 10), randomNumber(30, 100), -playersXDistance, playerYOffset),
+            new Entity("red", randomNumber(5, 10), randomNumber(30, 100), playersXDistance, playerYOffset),
+        ],
+        false
+    );
+}
 
 function render(engine) {
     if (engine.render()) {
@@ -36,10 +52,7 @@ async function main() {
         canvas,
         ctx,
         new WorldSettings(gravity, bounceFactor, frictionFactor, playerAcceleration, playerJumpForce, outOfBoundRadius, hardHitPowerMultiplier),
-        new World(new Platform("green", 2000, 200, 0, 0), [
-            new Entity("blue", playerMass, playerRadius, -playersXDistance, playerYOffset),
-            new Entity("red", playerMass, playerRadius, playersXDistance, playerYOffset),
-        ]),
+        genWorld,
         cameraFOV
     );
 
@@ -66,6 +79,7 @@ async function main() {
             }
         }
     };
+
     window.onkeyup = function (event) {
         if (event.repeat) return;
         switch (event.key.toLowerCase()) {

@@ -4,12 +4,14 @@ import { Entity, Platform, Vector2d, WorldSettings } from "./util.js";
 class World {
     /**
      * World structure
-     * @param {Platform} platform
+     * @param {Array<Platform>} platforms
      * @param {Array<Entity>} players
      */
-    constructor(platform, players) {
-        this.platform = platform;
+    constructor(platforms, players, gameOver, quadtree) {
+        this.platforms = platforms;
         this.players = players;
+        this.gameOver = gameOver;
+        this.quadtree = quadtree;
     }
 
     /**
@@ -17,7 +19,7 @@ class World {
      * @returns {World} Copy
      */
     copy() {
-        let output = new World(this.platform, []);
+        let output = new World(this.platforms, [], this.gameOver, this.quadtree);
         for (const player of this.players) {
             output.players.push(player.copy());
         }
@@ -212,10 +214,21 @@ class PhysicsEngine {
             // p = p + v
             player.addEq(player.velocity);
 
-            const platformCollision = this.rectCircleCollision(output.platform, player);
-            if (platformCollision.isIntersecting) {
-                this.rectCircleSolve(player, platformCollision, 0.01, 0.01);
-                player.canJump ||= platformCollision.isTopside;
+            const alignedPlayer = player.align();
+            const possibleCollisions = output.quadtree.get(alignedPlayer.x, alignedPlayer.y, alignedPlayer.width, alignedPlayer.height);
+            for (const platformID of possibleCollisions) {
+                const platform = output.platforms[platformID];
+                const platformCollision = this.rectCircleCollision(platform, player);
+                if (platformCollision.isIntersecting) {
+                    this.rectCircleSolve(player, platformCollision, 0.01, 0.01);
+                    player.canJump ||= platformCollision.isTopside;
+                }
+            }
+
+            if (player.distance(new Vector2d(0)) > this.settings.outOfBoundRadius) {
+                output.gameOver = true;
+                player.isDead = true;
+                break;
             }
         }
     }
@@ -224,6 +237,7 @@ class PhysicsEngine {
         const output = world.copy();
         for (let i = 0; i < amount; i++) {
             this.preformIteration(output);
+            if (output.gameOver) break;
         }
         return output;
     }
