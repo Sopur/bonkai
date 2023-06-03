@@ -169,9 +169,9 @@ class PhysicsEngine {
      * @param {World} world World to operate on
      */
     preformIteration(output) {
+        let newCollision = false;
         for (let i = 0; i < output.players.length; i++) {
             const player = output.players[i];
-            player.hasCollided = false;
             let force = new Vector2d(0, this.settings.gravity);
 
             for (let j = 0; j < output.players.length; j++) {
@@ -179,7 +179,9 @@ class PhysicsEngine {
                 const playerB = output.players[j];
 
                 const circleCollision = this.circleCircleCollision(player, playerB);
-                if (circleCollision.isIntersecting) {
+                newCollision = player.hasCollided != circleCollision.isIntersecting;
+                player.hasCollided = circleCollision.isIntersecting;
+                if (player.hasCollided) {
                     this.circleCircleSolve(
                         player,
                         playerB,
@@ -187,7 +189,6 @@ class PhysicsEngine {
                         this.settings.bounceFactor * (this.settings.hardHitPower * player.movement.harden),
                         this.settings.frictionFactor
                     );
-                    player.hasCollided = true;
                     player.canJump ||= circleCollision.isTopside;
                 }
             }
@@ -214,14 +215,23 @@ class PhysicsEngine {
             // p = p + v
             player.addEq(player.velocity);
 
-            const alignedPlayer = player.align();
-            const possibleCollisions = output.quadtree.get(alignedPlayer.x, alignedPlayer.y, alignedPlayer.width, alignedPlayer.height);
-            for (const platformID of possibleCollisions) {
-                const platform = output.platforms[platformID];
+            if (output.platforms.length === 1) {
+                const platform = output.platforms[0];
                 const platformCollision = this.rectCircleCollision(platform, player);
                 if (platformCollision.isIntersecting) {
                     this.rectCircleSolve(player, platformCollision, 0.01, 0.01);
                     player.canJump ||= platformCollision.isTopside;
+                }
+            } else {
+                const alignedPlayer = player.align();
+                const possibleCollisions = output.quadtree.get(alignedPlayer.x, alignedPlayer.y, alignedPlayer.width, alignedPlayer.height);
+                for (const platformID of possibleCollisions) {
+                    const platform = output.platforms[platformID];
+                    const platformCollision = this.rectCircleCollision(platform, player);
+                    if (platformCollision.isIntersecting) {
+                        this.rectCircleSolve(player, platformCollision, 0.01, 0.01);
+                        player.canJump ||= platformCollision.isTopside;
+                    }
                 }
             }
 
@@ -231,13 +241,21 @@ class PhysicsEngine {
                 break;
             }
         }
+        return newCollision;
     }
 
-    preformIterations(world, amount) {
-        const output = world.copy();
+    preformIterations(world, amount, miniMaxMode = false) {
+        let output = world.copy();
         for (let i = 0; i < amount; i++) {
-            this.preformIteration(output);
-            if (output.gameOver) break;
+            if (miniMaxMode) {
+                const intermediate = output.copy();
+                if (this.preformIteration(intermediate)) break;
+                output = intermediate;
+                if (output.gameOver) break;
+            } else {
+                this.preformIteration(output);
+                if (output.gameOver) break;
+            }
         }
         return output;
     }
