@@ -48,7 +48,7 @@ class MiniMaxAI {
         player.movement.left = false;
         player.movement.right = false;
         player.movement[flag] = true;
-        return this.engine.preformIterations(world, this.iterationsPerNode);
+        return this.engine.preformIterations(world, this.iterationsPerNode, true);
     }
 
     getMoves(player, opp) {

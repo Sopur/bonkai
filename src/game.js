@@ -101,7 +101,7 @@ class GameEngine {
     }
 
     iteration() {
-        this.lastEval = lerp(this.lastEval, this.ai.iteration(this.world, 7), 0.05);
+        this.lastEval = lerp(this.lastEval, this.ai.iteration(this.world, 8), 0.05);
         this.setTransform("blue", 1, 0, 0);
         this.ctx.fillRect(50, 40, 40, (this.screen.height - 40) / this.fov);
         this.setTransform("red", 1, 0, 0);
